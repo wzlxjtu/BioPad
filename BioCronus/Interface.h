@@ -3,7 +3,7 @@
 #include <string>
 #include <Dwmapi.h> 
 
-// define the interface parameters
+// define the GUI parameters
 HINSTANCE hInstance;
 HINSTANCE hPrevInstance;
 LPSTR lpCmdLine;

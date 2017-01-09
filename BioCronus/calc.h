@@ -1,3 +1,6 @@
+
+// This file contains different calculation functions
+
 #include <iostream>
 #include <string>
 #include<fstream>

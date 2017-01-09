@@ -1,4 +1,5 @@
-// This file contains the Bluetooth API for comminucating with sensors
+
+// This file contains the Bluetooth API for comminucating with the BioHarness 3 sensor
 
 #include <winsock2.h>
 #include <windows.h>
@@ -6,7 +7,6 @@
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
-
 
 string device_name = "";
 
@@ -331,15 +331,7 @@ SOCKET connectToZephyr()
 				else
 				{
 					//setup zephyr for streaming
-					//ZephUtils.setupBRwave(s);
 					ZephUtils.setupSummary(s);
-					//if(!ZephUtils.setupBioharness(s))
-					//{
-						//cout << "ERROR! Try Again!" << endl;
-						//closesocket(s);
-						//return NULL;
-					//}
-					//else
 					Sleep(5);
 					return s;
 				}

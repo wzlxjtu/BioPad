@@ -1,4 +1,5 @@
 ﻿// BioPad is a tool to leverage off-the-shelf video games for biofeedback training.
+// This is a sample application of BioPad, which works with Xbox 360 controller and the Zephyr Bioharness 3 sensor.
 // The software is written in C++.
 
 #include "main.h"
@@ -7,8 +8,7 @@
 #include "Interface.h"
 #include "calc.h"
 
-
-// This thread is for the GUI
+// This is the GUI thread
 DWORD WINAPI InterfaceThreadFunc(LPVOID lpParam)
 {
 	WNDCLASSEX wc;
@@ -65,7 +65,7 @@ DWORD WINAPI InterfaceThreadFunc(LPVOID lpParam)
 	return 0;
 }
 
-// This thread is for processing the Controller data from Cronus
+// This thread is for processing the controller data from Cronus
 DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 {
 	HINSTANCE cronus = (HINSTANCE)lpParam;
@@ -105,6 +105,7 @@ DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 
 	while (Cronus_Connected)
 	{
+		// read the controller data from Cronus
 		gcapi_Read(&report);
 
 		for (uint8_t i = 0; i<GCAPI_INPUT_TOTAL; i++)
@@ -125,7 +126,7 @@ DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 		Logging = 0;
 		if (!NormalPlay)
 		{
-			// Select different adaptation function here.
+			// Select different adaptation function here, and change the controller data
 			switch (I_mode)
 			{
 			case 0:
@@ -152,8 +153,9 @@ DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 				break;
 			}
 		}		
+
+		// Send the controller data back to Cronus
 		gcapi_Write(output);
-		//processControllerSignals(report);
 	}
 	//  Deallocate API resources and unload the library
 	gcdapi_Unload();
@@ -183,7 +185,7 @@ DWORD WINAPI LogFileThreadFunc(LPVOID lpParam)
 } 
 
 
-// This is the main function
+// This is the main function which reads sensor data and calls different threads
 int WINAPI WinMain(HINSTANCE hInstance_t,
 	HINSTANCE hPrevInstance_t,
 	LPSTR lpCmdLine_t,

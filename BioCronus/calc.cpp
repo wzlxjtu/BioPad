@@ -44,10 +44,8 @@ void Jittered_Mod(int8_t output[], float STRESS)
 // the speed interference
 void Speed_Only(int8_t output[], float STRESS)
 {
-	if(!ControlActive)
-		output[XB360_RT] = 35;
-	else
-		output[XB360_RT] = (0.25 * (1 - STRESS) + 0.1) * 100;
+	
+	output[XB360_RT] = (0.25 * (1 - STRESS) + 0.1) * 100;
 	//STRESS 0 - 1
 	//SpeedX 0.35 - 0.1
 }
@@ -55,26 +53,18 @@ void Speed_Only(int8_t output[], float STRESS)
 // decrease the speed button
 void Speed_Decrease(int8_t output[], float STRESS)
 {
-	if(ControlActive)
-	{
-		/*output[XB360_RT] = pow(1 - STRESS, 3) * output[XB360_RT];*/
-		output[XB360_RT] = max(output[XB360_RT] - 150 * STRESS, 0);
-		//output[XB360_LT] = min(output[XB360_LT] + 50 * STRESS, 100);
-		//output[XB360_RT] = 80;
-		if (STRESS > 0)
-			output[XB360_LT] = min(output[XB360_LT] + 30, 100);
-	}
+	output[XB360_RT] = max(output[XB360_RT] - 150 * STRESS, 0);
+	if (STRESS > 0)
+		output[XB360_LT] = min(output[XB360_LT] + 30, 100);
 }
 
 // increase the speed button
 void Speed_Increase(int8_t output[], float STRESS)
 {
-	if(ControlActive)
-	{
-		output[XB360_RT] = min(output[XB360_RT] + 100 * STRESS, 100);
-		if (STRESS > 0)
-			output[XB360_LT] = max(output[XB360_LT] - 500 * STRESS, 0);
-	}
+	
+	output[XB360_RT] = min(output[XB360_RT] + 100 * STRESS, 100);
+	if (STRESS > 0)
+		output[XB360_LT] = max(output[XB360_LT] - 500 * STRESS, 0);
 }
 
 // applying break button

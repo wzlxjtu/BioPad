@@ -59,16 +59,11 @@ using namespace std;
 #define Sensitivity			3//1 for normal
 #define MSG_DELIMITER				'|'
 #define PI					3.1415926535897
-// Open a console
-// maximum mumber of lines the output console should have
-static const WORD MAX_CONSOLE_LINES = 500;
 
-int I_mode = 0; // interference mode, 0 for none, 1-6 for different interference modes
+// interference mode, 0 for none, 1-6 for different interference modes
+int I_mode = 0; 
 string buttons[] = {"Xbox","Back", "Start","RB","RT","RS","LB","LT","LS","RX","RY","LX","LY",
 	"D-Up","D-Down","D-Left","D-Right","Y","B","A","X"};
-
-float Jitter_Curve[11] = {0, 0.13989899, 0.222348485, 0.29229798, 0.365719697, 0.476641414, 0.616540404, 0.740656566, 0.823106061, 0.894191919, 1};
-float Overlay_Curve[11] = {0, 0.096338384, 0.217676768, 0.336742424, 0.419191919, 0.542424242, 0.589436027, 0.636447811, 0.72260101, 0.795075758, 0.900883838};
 
 ofstream event_file, controller_file, zephyr_file;
 
@@ -85,7 +80,7 @@ char *manual_stress, *manual_recovery, *manual_intensity;
 
 extern bool centered_pattern;
 
-bool Zephyr_Connected = false, Cronus_Connected = false, OverlayActive = false, LogActive = false, PunishActive = false, ManualMode = false, ClockActive = false, ControlActive = false,
+bool Zephyr_Connected = false, Cronus_Connected = false, OverlayActive = false, LogActive = false, PunishActive = false, ManualMode = false, ClockActive = false,
 	isAlive=true, alive = true, program_alive = true, half_screen = true;;
 
 clock_t start_time; 
@@ -157,22 +152,6 @@ double Guassian (double mu, double sigma)
 
   return (mu + sigma * (double) X1);
 }
-float Normalized_Jitter(float STRESS)
-{
-	// Get difficulty index from the difficulty curve of overlay
-	float D_Index, N_Stress; // Difficulty index
-	int i = 0;
-	if (STRESS == 0)
-		return 0;
-	D_Index = Overlay_Curve[(int)(STRESS * 10)] + (Overlay_Curve[(int)(STRESS * 10) + 1] - Overlay_Curve[(int)(STRESS * 10)]) * (STRESS * 10 - (int)(STRESS * 10));
-
-	while (!(Jitter_Curve[i] < D_Index && D_Index < Jitter_Curve[i+1]))
-		i++;
-	// Get the normalized stress for jitter that yields to the same difficulty
-	N_Stress = 0.1 / (Jitter_Curve[i+1] - Jitter_Curve[i]) * (D_Index - Jitter_Curve[i]) + i * 0.1;
-	return N_Stress;
-}
-
 
 DWORD WINAPI BreakThreadFunc(LPVOID lpParam)
 {
@@ -210,12 +189,12 @@ DWORD WINAPI JitterThreadFunc(LPVOID lpParam)
 	while (TIME)
 	{
 		Jitter = 0;
-		normal_slot = Guassian((HNoJitterTimeOut - LNoJitterTimeOut) * Normalized_Jitter(STRESS) + LNoJitterTimeOut, HNoJitterTimeOut / 2);
-		jitter_slot = (JitterTimeOut - 200) * Normalized_Jitter(STRESS) + 200;
+		normal_slot = Guassian((HNoJitterTimeOut - LNoJitterTimeOut) * STRESS + LNoJitterTimeOut, HNoJitterTimeOut / 2);
+		jitter_slot = (JitterTimeOut - 200) * STRESS + 200;
 		if (normal_slot < 0)
 			normal_slot = 0;
 		Sleep(normal_slot);
-		if (Normalized_Jitter(STRESS) != 0)
+		if (STRESS != 0)
 		{
 			//JitterByTimeSlot//Sleep(NoJitterTimeOut - STRESS * (NoJitterTimeOut - JitterTimeOut));
 			if (rand()/(RAND_MAX + 1.0) < Max_Jitter_P)// * STRESS)//Decide Jitter or not
