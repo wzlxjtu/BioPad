@@ -1,12 +1,12 @@
-﻿// BioPad is a tool to leverage off - the - shelf video games for biofeedback training.
+﻿// BioPad is a tool to leverage off-the-shelf video games for biofeedback training.
 // The software is written in C++.
 
 #include "main.h"
 #include "Zephyr.h"
 #include "Cronus.h"
-#include "calc.h"
-#include "overlay.h"
 #include "Interface.h"
+#include "calc.h"
+
 
 // This thread is for the GUI
 DWORD WINAPI InterfaceThreadFunc(LPVOID lpParam)
@@ -68,8 +68,6 @@ DWORD WINAPI InterfaceThreadFunc(LPVOID lpParam)
 // This thread is for processing the Controller data from Cronus
 DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 {
-	
-
 	HINSTANCE cronus = (HINSTANCE)lpParam;
 	int8_t output[GCAPI_OUTPUT_TOTAL] = { 0 };
 	GCAPI_REPORT report;
@@ -128,13 +126,31 @@ DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 		if (!NormalPlay)
 		{
 			// Select different adaptation function here.
-
-			//Jittered_Mod(output, STRESS);
-			//Break_Mod(output, STRESS);
-			//Speed_Only(output, STRESS);
-			Speed_Decrease(output, STRESS);
-			//Speed_Increase(output, STRESS);
-			//Sensitive_Mod(output, STRESS, Sensitivity);
+			switch (I_mode)
+			{
+			case 0:
+				break;
+			case 1:
+				Jittered_Mod(output, STRESS);
+				break;
+			case 2:
+				Break_Mod(output, STRESS);
+				break;
+			case 3:
+				Speed_Only(output, STRESS);
+				break;
+			case 4:
+				Sensitive_Mod(output, STRESS, Sensitivity);
+				break;
+			case 5:
+				Speed_Increase(output, STRESS);
+				break;
+			case 6:
+				Speed_Decrease(output, STRESS);
+				break;
+			default:
+				break;
+			}
 		}		
 		gcapi_Write(output);
 		//processControllerSignals(report);
@@ -144,92 +160,6 @@ DWORD WINAPI CronusThreadFunc(LPVOID lpParam)
 	return 0;
 }
 
-// This is the thread for displaying the graphic overlay
-DWORD WINAPI OverlayThreadFunc(LPVOID lpParam)
-{
-		////detect a mouse right click to get the window handle
-		//printf("Please right-click to choose a window:\n");
-		//while (true){
-		//	if (GetKeyState(VK_RBUTTON) & 0x8000){
-		//		GetCursorPos(&pos);
-		//		printf("Clicked position: (%i,%i)\n", pos.x, pos.y);
-		//		break;
-		//	}
-		//}
-		// Get the RGB value from a pixel
-		RECT rc;
-		hDC = ::GetDC(NULL); //Get screen DC
-		//HWND newhwnd = WindowFromPoint(pos);
-		HWND newhwnd = GetShellWindow();
-
-		if (newhwnd != NULL){
-			GetWindowRect(newhwnd, &rc);
-			s_width = rc.right - rc.left;
-			s_height = rc.bottom - rc.top;
-		}
-		else{
-			ExitProcess(0);
-		}
-		
-		WNDCLASSEX wc;
-
-		ZeroMemory(&wc, sizeof(WNDCLASSEX));
-
-		wc.cbSize = sizeof(WNDCLASSEX);
-		wc.style = CS_HREDRAW | CS_VREDRAW;
-		wc.lpfnWndProc = WindowProc;
-		wc.hInstance = hInstance;
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground = (HBRUSH)RGB(0, 0, 0);
-		wc.lpszClassName = L"WindowClass";
-
-		RegisterClassEx(&wc);
-
-		hWnd = CreateWindowEx(0,
-			L"WindowClass",
-			L"",
-			WS_EX_TOPMOST | WS_POPUP,
-			rc.left, rc.top,
-			s_width, s_height,
-			NULL,
-			NULL,
-			hInstance,
-			NULL);
-
-		SetWindowLong(hWnd, GWL_EXSTYLE, (int)GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
-		SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 0, ULW_COLORKEY);
-		SetLayeredWindowAttributes(hWnd, 0, 255, LWA_ALPHA);
-
-		ShowWindow(hWnd, nCmdShow);
-
-		initD3D(hWnd);
-		MSG msg;
-		::SetWindowPos(newhwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		while (TRUE)
-		{
-			::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-			if (!newhwnd)
-				ExitProcess(0);
-			render();
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			if (msg.message == WM_QUIT)
-				exit(0);
-		}
-
-		::ReleaseDC(NULL, hDC); //Release screen DC
-
-	return 0;
-} 
-DWORD WINAPI CenteredOverlayThreadFunc(LPVOID lpParam)
-{
-
-	return 0;
-} 
 
 // This is the thread for logging user information and data
 DWORD WINAPI LogFileThreadFunc(LPVOID lpParam)
@@ -242,8 +172,6 @@ DWORD WINAPI LogFileThreadFunc(LPVOID lpParam)
 	string EVENTS_FILE = Concatenate(USER,"\\Events Log.txt");
 	string CONTROLLER_FILE = Concatenate(USER,"\\Controller Log.txt");
 	string ZEPHYR_FILE = Concatenate(USER,"\\Zephyr Data Log.txt");
-	//string RELAX_FILE2 = Concatenate(USER2,"\\Relaxed Calibration.txt");
-	//string STRESS_FILE2 = Concatenate(USER2,"\\Stressed Calibration.txt");
 	event_file.open(EVENTS_FILE);
 	controller_file.open(CONTROLLER_FILE);
 	zephyr_file.open(ZEPHYR_FILE);
@@ -254,6 +182,8 @@ DWORD WINAPI LogFileThreadFunc(LPVOID lpParam)
 	return 0;
 } 
 
+
+// This is the main function
 int WINAPI WinMain(HINSTANCE hInstance_t,
 	HINSTANCE hPrevInstance_t,
 	LPSTR lpCmdLine_t,
@@ -267,12 +197,8 @@ int WINAPI WinMain(HINSTANCE hInstance_t,
 	nCmdShow = nCmdShow_t;
 	
 	Interface_thread = CreateThread(NULL, 0, InterfaceThreadFunc, (LPVOID)InterfaceInst, 0, &Interface_thread_ID);
-	Overlay_thread = CreateThread(NULL, 0, OverlayThreadFunc, (LPVOID)OverlayInst, 0, &Overlay_thread_ID);
-	CenteredOverlay_thread = CreateThread(NULL, 0, CenteredOverlayThreadFunc, (LPVOID)CenteredOverlayInst, 0, &CenteredOverlay_thread_ID);
-	OverlayPattern_thread = CreateThread(NULL, 0, OverlayPatternThreadFunc, NULL, 0, &OverlayPattern_ID);
 	int year, heartrate, breathrate, hrv;
 	int BR_OLD = 0, BR_NEW = 0;
-	//float RESP_AVE;
 	int count = 0;
 	const int BUF_LEN = 60;
 	char recvBuf[BUF_LEN];
@@ -282,8 +208,6 @@ int WINAPI WinMain(HINSTANCE hInstance_t,
 	int RESP_COUNT = 0;
 	float RR_average;
 #pragma endregion
-	// To open a Console
-	//RedirectIOToConsole();
 #pragma region Zephyr to STRESS
 	while (program_alive)
 	{
@@ -303,7 +227,6 @@ int WINAPI WinMain(HINSTANCE hInstance_t,
 					heartrate <256 && heartrate >-1 &&
 					breathrate <256 && breathrate >-1)
 				{
-					//ZephUtils.print(recvBuf, BUF_LEN);
 					Actual_BR = breathrate*1.0 / 10;
 					// Calculate the average breathing rate within 60s
 					Ave_RR.push_back(Actual_BR);
@@ -379,40 +302,57 @@ LRESULT CALLBACK GUIProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				85, 65, 80, 30,
 				hwnd, (HMENU) 'z', NULL, NULL);
 			Device_Box = CreateWindow(L"STATIC", L"", WS_VISIBLE | WS_CHILD, 180, 67, 80, 30, hwnd, NULL, NULL, NULL);
-			CreateWindow(L"STATIC", L"Manual Mode: ", WS_VISIBLE | WS_CHILD, 30, 114, 110, 20, hwnd, NULL, NULL, NULL);
+			CreateWindow(L"STATIC", L"Manual Intensity: ", WS_VISIBLE | WS_CHILD, 30, 114, 130, 20, hwnd, NULL, NULL, NULL);
 			Manual_Box = CreateWindow(L"EDIT",L"1",
 				WS_VISIBLE | WS_CHILD | WS_BORDER,
-				130, 113, 40, 20,
+				150, 113, 40, 20,
 				hwnd, NULL, NULL, NULL);
 			Manual_Button = CreateWindow(L"Button", L"Activate",
 				WS_VISIBLE | WS_CHILD,
-				180, 110, 80, 30,
+				200, 108, 80, 30,
 				hwnd, (HMENU) 'm', NULL, NULL);
 			CreateWindow(L"STATIC", 
-				L" CRONUS      |       CONTROL       |     OVERLAY ", 
+				L" CRONUS                               LOG  ", 
 				WS_VISIBLE | WS_CHILD, 40, 155, 400, 20, hwnd, NULL, NULL, NULL);
 			Cronus_Button = CreateWindow(L"Button", L"Connect",
 				WS_VISIBLE | WS_CHILD,
 				34, 175, 80, 30,
 				hwnd, (HMENU) 'c', NULL, NULL);
-			Control_Button = CreateWindow(L"Button", L"Activate",
-				WS_VISIBLE | WS_CHILD,
-				147, 175, 80, 30,
-				hwnd, (HMENU) 'k', NULL, NULL);
-			Overlay_Button = CreateWindow(L"Button",L"Activate",
-				WS_VISIBLE | WS_CHILD,
-				265, 175, 80, 30,
-				hwnd, (HMENU) 'o' , NULL, NULL);
-			Half_Button = CreateWindow(L"Button",L"FULL",
-				WS_VISIBLE | WS_CHILD,
-				280, 210, 50, 20,
-				hwnd, (HMENU) 'f' , NULL, NULL);
-			Button_Enable(Half_Button, false);
-			CreateWindow(L"STATIC", L"Log:", WS_VISIBLE | WS_CHILD, 30, 265, 50, 20, hwnd, NULL, NULL, NULL);
 			Log_Button = CreateWindow(L"Button", L"Start",
 				WS_VISIBLE | WS_CHILD,
-				80, 235, 80, 80,
+				200, 175, 80, 30,
 				hwnd, (HMENU) 'l', NULL, NULL);
+
+			CreateWindow(L"STATIC", L"Interference Mode:", WS_VISIBLE | WS_CHILD, 34, 220, 150, 40, hwnd, NULL, NULL, NULL);
+			Jitter_Button = CreateWindow(L"Button", L"Jitter",
+				WS_VISIBLE | WS_CHILD,
+				34, 240, 50, 20,
+				hwnd, (HMENU) '1', NULL, NULL);
+			Break_Button = CreateWindow(L"Button", L"Break",
+				WS_VISIBLE | WS_CHILD,
+				94, 240, 60, 20,
+				hwnd, (HMENU) '2', NULL, NULL);
+			Speed_Button = CreateWindow(L"Button", L"Speed",
+				WS_VISIBLE | WS_CHILD,
+				34, 265, 50, 20,
+				hwnd, (HMENU) '3', NULL, NULL);
+			Sensitive_Button = CreateWindow(L"Button", L"Sensitivity",
+				WS_VISIBLE | WS_CHILD,
+				89, 265, 80, 20,
+				hwnd, (HMENU) '4', NULL, NULL);
+			Increase_Button = CreateWindow(L"Button", L"Increase",
+				WS_VISIBLE | WS_CHILD,
+				24, 290, 70, 20,
+				hwnd, (HMENU) '5', NULL, NULL);
+			Decrease_Button = CreateWindow(L"Button", L"Decrease",
+				WS_VISIBLE | WS_CHILD,
+				98, 290, 70, 20,
+				hwnd, (HMENU) '6', NULL, NULL);
+			Clear_Button = CreateWindow(L"Button", L"Clear",
+				WS_VISIBLE | WS_CHILD,
+				105, 315, 50, 20,
+				hwnd, (HMENU) '0', NULL, NULL);
+
 			Button_Enable(Log_Button, false);
 			CreateWindow(L"STATIC", L"TIME:", WS_VISIBLE | WS_CHILD, 180, 235, 40, 20, hwnd, NULL, NULL, NULL);
 			Time_Box = CreateWindow(L"STATIC", L"0", WS_VISIBLE | WS_CHILD, 230, 235, 40, 20, hwnd, NULL, NULL, NULL);
@@ -534,29 +474,6 @@ LRESULT CALLBACK GUIProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					}
 				break;
 #pragma endregion
-				case 'o':
-#pragma region Overlay_Control
-					if (!OverlayActive)
-					{
-						OverlayActive = true;
-						Button_SetText(Overlay_Button,L"Deactivate");
-						Button_Enable(Half_Button, true);
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Overlay Activated" << endl;
-					}
-					else
-					{
-						OverlayActive = false;
-						Button_SetText(Overlay_Button,L"Activate");
-						Button_Enable(Half_Button, false);
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Overlay Disabled" << endl;
-						Overlay_1st = true;
-					}
-				break;
-#pragma endregion
 				case 'm':
 #pragma region Set Manual Stress
 					if (!ManualMode)
@@ -631,68 +548,38 @@ LRESULT CALLBACK GUIProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						<< " " << sys.wSecond << " " << "Change Recovery Time to " << recovery_time <<endl;
 				break;
 #pragma endregion
-				case 'k':
-#pragma region Control Button
-					if (!ControlActive)
-					{
-						//system("start joycur\\joycur.exe");
-						Button_SetText(Control_Button,L"Deactivate");
-						ControlActive = true;
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Enable Biofeedback on Control" << endl;
-					}
-					else
-					{
-						//system("taskkill /IM joycur.exe");
-						Button_SetText(Control_Button,L"Activate");
-						ControlActive = false;
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Disable Biofeedback on Control" << endl;
-					}
-				break;
-#pragma endregion
 				case 'i':
 #pragma region Intensity Button
 					GetWindowText(Intensity_Box, intensity_str, sizeof(intensity_str)-1);
 					manual_intensity = new char[TCHAR2STRING(intensity_str).length()+1];
 					strcpy(manual_intensity, TCHAR2STRING(intensity_str).c_str());
 					intensity = atof(manual_intensity);
-					if (OverlayActive)
-					{
-						TerminateThread(Overlay_thread, 0);
-						CloseHandle(Overlay_thread);
-						Overlay_thread = CreateThread(NULL, 0, OverlayThreadFunc, (LPVOID)OverlayInst, 0, &Overlay_thread_ID);
-					}
 					GetLocalTime(&sys);
 					event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
 						<< " " << sys.wSecond << " " << "Changed Biofeedback Intensity to " << intensity << endl;
 				break;
 #pragma endregion
-				case 'f':
-#pragma region Half Button
-					if (half_screen)
-					{
-						Button_SetText(Half_Button,L"HALF");
-						half_screen = false;
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Change to Full Screen Overlay" << endl;
-					}
-					else
-					{
-						Button_SetText(Half_Button,L"FULL");
-						half_screen = true;
-						GetLocalTime(&sys);
-						event_file << "0 " << sys.wYear << " " << sys.wMonth << " " << sys.wDay << " " << sys.wHour << " " << sys.wMinute
-						<< " " << sys.wSecond << " " << "Change to Half Screen Overlay" << endl;
-					}
-					TerminateThread(Overlay_thread, 0);
-					CloseHandle(Overlay_thread);
-					Overlay_thread = CreateThread(NULL, 0, OverlayThreadFunc, (LPVOID)OverlayInst, 0, &Overlay_thread_ID);
-				break;
-#pragma endregion
+				case '0':
+					I_mode = 0;
+					break;
+				case '1':
+					I_mode = 1;
+					break;
+				case '2':
+					I_mode = 2;
+					break;
+				case '3':
+					I_mode = 3;
+					break;
+				case '4':
+					I_mode = 4;
+					break;
+				case '5':
+					I_mode = 5;
+					break;
+				case '6':
+					I_mode = 6;
+					break;
 			}
 		break;
 #pragma region Other Messages
@@ -710,12 +597,6 @@ LRESULT CALLBACK GUIProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			event_file.close();
 			zephyr_file.close();
 			controller_file.close();
-			TerminateThread(Overlay_thread, 0);
-			CloseHandle(Overlay_thread);
-			TerminateThread(CenteredOverlay_thread, 0);
-			CloseHandle(CenteredOverlay_thread);
-			TerminateThread(OverlayPattern_thread, 0);
-			CloseHandle(OverlayPattern_thread);
             DestroyWindow(hwnd);
 			system("taskkill /IM joycur.exe");
 			program_alive = false;
