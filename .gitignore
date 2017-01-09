@@ -5,5 +5,4 @@ Release/*
 *.opendb
 BioCronus/Debug/*
 BioCronus/Release/*
-BioCronus/*.vcxproj
 *.docx
