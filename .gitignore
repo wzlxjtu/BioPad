@@ -6,4 +6,4 @@ Release/*
 BioCronus/Debug/*
 BioCronus/Release/*
 BioCronus/*.vcxproj
-.docx
+*.docx
